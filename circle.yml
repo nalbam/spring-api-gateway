@@ -1,0 +1,41 @@
+machine:
+  timezone: Asia/Seoul
+  java:
+    version: oraclejdk8
+  environment:
+    CONFIG_SERVER: http://localhost:8888
+
+dependencies:
+  pre:
+    - curl -s toast.sh/install-v3 | bash
+  post:
+    - ~/toaster/toast.sh config REGION us-east-1
+    - ~/toaster/toast.sh config BUCKET virginia.me17.com
+
+compile:
+  pre:
+    - ~/toaster/toast.sh version $CIRCLE_BRANCH $CIRCLE_BUILD_NUM
+  override:
+    - mvn clean package -DskipTests
+  post:
+    - ls -al target
+
+test:
+  pre:
+    - python -m SimpleHTTPServer 8888:
+        background: true
+  post:
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit/
+    - find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+
+deployment:
+  development:
+    branch: /^(?!master$).*$/
+    commands:
+      - ~/toaster/toast.sh publish beanstalk
+      - ~/toaster/toast.sh deploy beanstalk boot-admin-dev
+  production:
+    branch: master
+    commands:
+      - ~/toaster/toast.sh publish beanstalk
+      - ~/toaster/toast.sh deploy beanstalk boot-admin-prod

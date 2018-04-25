@@ -1,0 +1,16 @@
+server:
+  port: ${PORT:9090}
+
+spring:
+  jackson:
+    time-zone: Asia/Seoul
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+---
+
+spring:
+  profiles: test
+eureka:
+  client:
+    enabled: false
